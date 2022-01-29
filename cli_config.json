@@ -23,16 +23,16 @@
     {
       "items" :
         {
-          "firstItemId" : 11,
-          "lastItemId" : 11
+          "firstItemId" : 10,
+          "lastItemId" : 10
         }
     },
   "cli_3b_burn_nft" :
     {
       "tokens" :
         {
-          "firstTokenId" : 7,
-          "lastTokenId" : 8
+          "firstTokenId" : 10,
+          "lastTokenId" : 10
         }
     },
   "cli_5a_new_auction" :

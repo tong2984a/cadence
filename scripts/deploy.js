@@ -10,12 +10,6 @@ async function main () {
   let beneficiary = accounts[2]
   let duration = cli_config['deploy']['auction']['duration_in_seconds'] //unit in sec
 
-  const Auction = await hre.ethers.getContractFactory("Auction")
-  console.log('Deploying Auction...')
-  const auction = await upgrades.deployProxy(Auction, [duration, beneficiary.address])
-  await auction.deployed()
-  console.log("auction deployed to:", auction.address)
-
   const NFTMarket = await hre.ethers.getContractFactory("NFTMarket")
   const nftMarket = await upgrades.deployProxy(NFTMarket)
   await nftMarket.deployed()
@@ -30,7 +24,6 @@ async function main () {
   await nft.deployed()
   await nft.setContractURIHash(contractURIHash)
   await nft.addMinter(owner.address)
-  await nft.setApprovalForAll(auction.address, true);
   console.log("nft deployed to:", nft.address)
 
   let contract_owner = config['chains'][hre.network.name]['contract_owner']['address']
@@ -38,12 +31,10 @@ async function main () {
 
   let nftmarketaddress = nftMarket.address
   let nftaddress = nft.address
-  let auctionAddress = auction.address
 
   config['deployed'] = {
     nftmarketaddress,
     nftaddress,
-    auctionAddress,
     envChain,
     contract_owner
   }

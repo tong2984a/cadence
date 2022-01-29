@@ -28,9 +28,7 @@ async function main() {
   let event
   for (let i = 0; i < count; i++) {
     transaction = await nft.createToken(
-      tokenURIHash,
-      tokenDetails.content,
-      tokenDetails.date,
+      tokenURIHash
     )
     tx = await transaction.wait()
     event = tx.events[0]

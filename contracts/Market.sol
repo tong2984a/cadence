@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-import "hardhat/console.sol";
 
 contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable, OwnableUpgradeable {
   using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -16,9 +14,6 @@ contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable
   CountersUpgradeable.Counter private _itemsSold;
 
   uint256 listingPrice;
-  string public version;
-
-  bytes4 private constant _INTERFACE_ID_ERC2981 = 0x2a55205a;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() initializer {}
@@ -30,37 +25,8 @@ contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable
   }
 
 	function _authorizeUpgrade(address) internal override onlyOwner {
-		version = "2.0"; // this will actually be called when upgrading the contract.
+		//version = "2.0"; // this will actually be called when upgrading the contract.
 	}
-
-  /// @notice Transfers royalties to the rightsowner if applicable
-  /// @param tokenId - the NFT assed queried for royalties
-  /// @param grossSaleValue - the price at which the asset will be sold
-  /// @return netSaleAmount - the value that will go to the seller after
-  ///         deducting royalties
-  function _deduceRoyalties(address nftContract, uint256 tokenId, uint256 grossSaleValue)
-  internal returns (uint256 netSaleAmount) {
-      // Get amount of royalties to pays and recipient
-      (address royaltiesReceiver, uint256 royaltiesAmount) = IERC2981Upgradeable(nftContract).royaltyInfo(tokenId, grossSaleValue);
-      // Deduce royalties from sale value
-      uint256 netSaleValue = grossSaleValue - royaltiesAmount;
-      // Transfer royalties to rightholder if not zero
-      if (royaltiesAmount > 0) {
-          royaltiesReceiver.call{value: royaltiesAmount}('');
-      }
-      // Broadcast royalties payment
-      emit RoyaltiesPaid(tokenId, royaltiesAmount);
-      return netSaleValue;
-  }
-
-  /// @notice Checks if NFT contract implements the ERC-2981 interface
-  /// @param _contract - the address of the NFT contract to query
-  /// @return true if ERC-2981 interface is supported, false otherwise
-  function _checkRoyalties(address _contract) internal returns (bool) {
-      (bool success) = IERC2981Upgradeable(_contract).
-      supportsInterface(_INTERFACE_ID_ERC2981);
-      return success;
-  }
 
   struct MarketItem {
     uint itemId;
@@ -96,8 +62,6 @@ contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable
 
   // Emitted when the stored value changes
   event ValueChanged(uint256 value);
-
-  event RoyaltiesPaid(uint256 tokenId, uint value);
 
   // Increments the stored value by 1
   function incrementListingPrice() public {
@@ -155,10 +119,6 @@ contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable
     uint tokenId = idToMarketItem[itemId].tokenId;
 
     uint256 saleValue = msg.value;
-    // Pay royalties if applicable
-    if (_checkRoyalties(nftContract)) {
-        saleValue = _deduceRoyalties(nftContract, tokenId, saleValue);
-    }
     // Transfer funds to the seller
     idToMarketItem[itemId].seller.call{value: saleValue}('');
     IERC721Upgradeable(nftContract).transferFrom(address(this), msg.sender, tokenId);
