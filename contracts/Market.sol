@@ -109,6 +109,16 @@ contract NFTMarket is Initializable, ReentrancyGuardUpgradeable, UUPSUpgradeable
     );
   }
 
+  function updateBid(
+    address lastBidder,
+    uint256 lastbid
+    ) public payable nonReentrant {
+    require(msg.value > lastbid, "Please submit the asking price in order to complete the purchase");
+
+    payable(owner()).transfer(msg.value - lastbid);
+    payable(lastBidder).transfer(lastbid);
+  }
+
   /* Creates the sale of a marketplace item */
   /* Transfers ownership of the item, as well as funds between parties */
   function createMarketSale(
