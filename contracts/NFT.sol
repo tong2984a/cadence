@@ -7,30 +7,25 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Enumer
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "hardhat/console.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
-contract NFT is Initializable, ERC721URIStorageUpgradeable, UUPSUpgradeable, OwnableUpgradeable, ERC721EnumerableUpgradeable, AccessControlUpgradeable {
+contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgradeable, UUPSUpgradeable, OwnableUpgradeable, ERC721EnumerableUpgradeable {
   using StringsUpgradeable for uint256;
-  using CountersUpgradeable for CountersUpgradeable.Counter;
-  CountersUpgradeable.Counter private _tokenIds;
 
   // IPFS content hash of contract-level metadata
   string private _contractURIHash;
 
-  address contractAddress;
+  uint256 private listingPrice;
+
+  address private sellerAddress;
   // Maximum amounts of mintable tokens
   uint256 public constant MAX_SUPPLY = 7777;
-
-  // Create a new role identifier for the minter role
-  bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() initializer {}
 
-  function initialize(address marketplaceAddress,
+  function initialize(address _sellerAddress,
     string memory name,
     string memory symbol) external initializer {
     __ERC721_init(name, symbol);
@@ -38,10 +33,23 @@ contract NFT is Initializable, ERC721URIStorageUpgradeable, UUPSUpgradeable, Own
     __ERC721URIStorage_init();
     __Ownable_init();
     __UUPSUpgradeable_init();
-    contractAddress = marketplaceAddress;
-    __AccessControl_init();
-    _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
+    sellerAddress = _sellerAddress;
     _contractURIHash = '';
+    listingPrice = 0.005 ether;
+  }
+
+  // Emitted when the stored value changes
+  event ValueChanged(uint256 value);
+
+  // Increments the stored value by 1
+  function incrementListingPrice() public {
+      listingPrice = listingPrice + 0.0001 ether;
+      emit ValueChanged(listingPrice);
+  }
+
+  /* Returns the listing price of the contract */
+  function getListingPrice() public view returns (uint256) {
+    return listingPrice;
   }
 
 	function _authorizeUpgrade(address) internal override onlyOwner {
@@ -73,17 +81,10 @@ contract NFT is Initializable, ERC721URIStorageUpgradeable, UUPSUpgradeable, Own
 
   /// @notice Informs callers that this contract supports ERC2981
   function supportsInterface(bytes4 interfaceId) public view
-    override(ERC721Upgradeable, ERC721EnumerableUpgradeable, AccessControlUpgradeable)
+    override(ERC721Upgradeable, ERC721EnumerableUpgradeable)
     returns (bool)
   {
-    return interfaceId == type(IERC2981Upgradeable).interfaceId || super.supportsInterface(interfaceId);
-  }
-
-  /// @dev Add an account to the user role. Restricted to admins.
-  function addMinter(address account)
-    public virtual onlyOwner
-  {
-    grantRole(MINTER_ROLE, account);
+    return super.supportsInterface(interfaceId);
   }
 
   /// @notice Returns all the tokens owned by an address
@@ -117,19 +118,20 @@ contract NFT is Initializable, ERC721URIStorageUpgradeable, UUPSUpgradeable, Own
 
   function createToken(
     string memory tokenURIHash
-  ) external returns (uint256) {
+  ) external payable nonReentrant returns (uint256) {
+    require(msg.value >= listingPrice, "Please submit the listing price in order to complete the purchase");
     //the totalSupply function determines how many NFT's in total exist currently, excluding the burnt ones.
-    require(totalSupply() <= MAX_SUPPLY, "All tokens minted");
+    uint256 newItemId = totalSupply();
+    require(newItemId <= MAX_SUPPLY, "All tokens minted");
 
-    // Check that the calling account has the minter role
-    //require(hasRole(MINTER_ROLE, msg.sender), "Caller is not a minter");
-
-    _tokenIds.increment();
-    uint256 newItemId = _tokenIds.current();
-    _safeMint(msg.sender, newItemId);
     string memory uri = string(abi.encodePacked('ipfs://', tokenURIHash));
+    uint256 saleValue = msg.value;
+
+    // Transfer funds to the seller
+    (bool sent, ) = payable(sellerAddress).call{value: saleValue}('');
+    require(sent, "Failed to send Ether");
+    _safeMint(msg.sender, newItemId);
     _setTokenURI(newItemId, uri);
-    setApprovalForAll(contractAddress, true);
     return newItemId;
   }
 

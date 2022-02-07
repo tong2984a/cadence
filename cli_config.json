@@ -54,5 +54,13 @@
   "cli_5f_show_bids" :
     {
       "days" : 1
+    },
+  "cli_6a_mint_nft" :
+    {
+      "count" : 1
+    },
+  "cli_6c_burn_nft" :
+    {
+      "tokenId" : 1
     }
 }
