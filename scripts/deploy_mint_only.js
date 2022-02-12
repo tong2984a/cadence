@@ -8,14 +8,16 @@ async function main () {
   let accounts = await ethers.getSigners()
   let owner = accounts[0]
   let admin = accounts[1]
-  let beneficiary = accounts[2]
+  //let beneficiary = accounts[2]
+  let beneficiary_address = "0x0A860BfA647D5E2B748B31b8c816B005D68e543f"
 
   let symbol = config['token']['symbol']
   let name = config['token']['name']
   let contractURIHash = config['token']['contractURI.json']['hash']
 
   const NFT = await hre.ethers.getContractFactory("NFT")
-  const nft = await upgrades.deployProxy(NFT, [beneficiary.address, name, symbol])
+  //const nft = await upgrades.deployProxy(NFT, [beneficiary.address, name, symbol])
+  const nft = await upgrades.deployProxy(NFT, [beneficiary_address, name, symbol])
   await nft.deployed()
   await nft.setContractURIHash(contractURIHash)
   console.log("nft deployed to:", nft.address)

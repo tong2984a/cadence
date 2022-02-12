@@ -20,7 +20,7 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
 
   address private sellerAddress;
   // Maximum amounts of mintable tokens
-  uint256 public constant MAX_SUPPLY = 7777;
+  uint256 public constant MAX_SUPPLY = 8888;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() initializer {}
@@ -35,7 +35,8 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
     __UUPSUpgradeable_init();
     sellerAddress = _sellerAddress;
     _contractURIHash = '';
-    listingPrice = 0.005 ether;
+    //listingPrice = 0.005 ether;
+    listingPrice = 0.25 ether;
   }
 
   // Emitted when the stored value changes
@@ -43,7 +44,7 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
 
   // Increments the stored value by 1
   function incrementListingPrice() public {
-      listingPrice = listingPrice + 0.0001 ether;
+      listingPrice = listingPrice + 0.01 ether;
       emit ValueChanged(listingPrice);
   }
 

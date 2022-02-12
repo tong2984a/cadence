@@ -66,8 +66,7 @@
         }
     },
     "deployed": {
-        "nftmarketaddress": "0xBf878dEC99640Ff4a1aF78Ef9d31ba8F8dB5F7E5",
-        "nftaddress": "0x489C65FE03a3e16A0a078F007E0a9CBd850573f3",
+        "nftaddress": "0x1E271a4E3304236754609C788F1b395319729e77",
         "envChain": {
             "name": "rinkeby",
             "id": "0x4"
