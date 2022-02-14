@@ -3,6 +3,7 @@ pragma solidity ^0.8.3;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -12,6 +13,8 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 
 contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgradeable, UUPSUpgradeable, OwnableUpgradeable, ERC721EnumerableUpgradeable {
   using StringsUpgradeable for uint256;
+  using CountersUpgradeable for CountersUpgradeable.Counter;
+  CountersUpgradeable.Counter private _tokenIds;
 
   // IPFS content hash of contract-level metadata
   string private _contractURIHash;
@@ -35,7 +38,6 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
     __UUPSUpgradeable_init();
     sellerAddress = _sellerAddress;
     _contractURIHash = '';
-    //listingPrice = 0.005 ether;
     listingPrice = 0.25 ether;
   }
 
@@ -43,13 +45,17 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
   event ValueChanged(uint256 value);
 
   // Increments the stored value by 1
-  function incrementListingPrice() public {
+  function incrementListingPrice() external onlyOwner {
       listingPrice = listingPrice + 0.01 ether;
       emit ValueChanged(listingPrice);
   }
 
+  function setListingPrice(uint256 _listingPrice) external onlyOwner {
+    listingPrice = _listingPrice;
+  }
+
   /* Returns the listing price of the contract */
-  function getListingPrice() public view returns (uint256) {
+  function getListingPrice() external view returns (uint256) {
     return listingPrice;
   }
 
@@ -122,7 +128,8 @@ contract NFT is Initializable, ReentrancyGuardUpgradeable, ERC721URIStorageUpgra
   ) external payable nonReentrant returns (uint256) {
     require(msg.value >= listingPrice, "Please submit the listing price in order to complete the purchase");
     //the totalSupply function determines how many NFT's in total exist currently, excluding the burnt ones.
-    uint256 newItemId = totalSupply();
+    _tokenIds.increment();
+    uint256 newItemId = _tokenIds.current();
     require(newItemId <= MAX_SUPPLY, "All tokens minted");
 
     string memory uri = string(abi.encodePacked('ipfs://', tokenURIHash));
