@@ -7,17 +7,11 @@ async function main() {
   let accounts = await ethers.getSigners()
   let owner = accounts[0]
   let owner_address = [owner.address.substr(0, 4), owner.address.substr(38, 4)].join('...')
-  let purchaser = accounts[1]
-  let purchaser_address = [purchaser.address.substr(0, 4), purchaser.address.substr(38, 4)].join('...')
-  let beneficiary = accounts[2]
-  let beneficiary_address = [beneficiary.address.substr(0, 4), beneficiary.address.substr(38, 4)].join('...')
 
+  let new_price = cli_config['cli_6b_raise_price']['new_price']
   console.log(`\nRaising Price: ...`)
 
-//  let marketContractAddress = config['deployed']['nftmarketaddress']
   let nftContractAddress = config['deployed']['nftaddress']
-  //const Market = await hre.ethers.getContractFactory("NFTMarket")
-  //const market = await Market.attach(marketContractAddress)
   const NFT = await hre.ethers.getContractFactory("NFT")
   const nft = await NFT.attach(nftContractAddress)
 
@@ -35,7 +29,7 @@ async function main() {
   listingPrice = event.args['value']
   console.log(`Incrementing listing price by 0.01: ${parseInt(listingPrice) / 10**18}`)
 
-  listingPrice = ethers.utils.parseUnits('0.3', 'ether')
+  listingPrice = ethers.utils.parseUnits(new_price, 'ether')
   await nft.setListingPrice(listingPrice)
 
   listingPrice = await nft.getListingPrice()

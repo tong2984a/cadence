@@ -59,6 +59,10 @@
     {
       "count" : 1
     },
+  "cli_6b_raise_price" :
+    {
+      "new_price" : "0.31"
+    },
   "cli_6c_burn_nft" :
     {
       "tokenId" : 1
